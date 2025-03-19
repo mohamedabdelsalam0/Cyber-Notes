@@ -11,3 +11,4 @@ App For Taking Screenshots As Notes
 # How To Use
 
 
+![image](https://github.com/user-attachments/assets/a1f0025b-74ca-48ae-a94a-c3178b48c2ca)
