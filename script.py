@@ -9,8 +9,8 @@ import pyperclip
 import shutil # Import shutil
 
 # Path to database folder
-BASE_DIR = r"F:\Macros\all\database"  # Replace with your actual path
-SCREENSHOTS_DIR = r"C:\Users\cizer\Desktop\screenshots" # Replace with your screenshot path
+BASE_DIR = r"F:\database"  # Replace with your actual path
+SCREENSHOTS_DIR = r"F:\screenshots" # Replace with your screenshot path
 
 
 def natural_sort_key(s):
