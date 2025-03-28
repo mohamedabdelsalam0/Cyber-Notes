@@ -33,6 +33,7 @@ class ImageGallery:
         # Automatically detect base directories
         self.BASE_DIRS = [f for f in os.listdir(".") if os.path.isdir(f) and f != "__pycache__"]
         self.SCREENSHOTS_DIR = r"F:\Macros\notes\images\screenshots"
+        self.ATTACHMENTS_DIR_NAME = "attachments"  # Name of the subfolder
 
         # Top Frame
         self.top_frame = Frame(root, bg=self.bg_color, borderwidth=1, relief=tk.GROOVE, padx=5, pady=5)
@@ -117,6 +118,10 @@ class ImageGallery:
         self.tag_button.pack(side=tk.LEFT, padx=3)
         self.notes_button = Button(self.nav_frame, text="Notes", command=self.open_notes_editor, **button_style)
         self.notes_button.pack(side=tk.LEFT, padx=3)
+        self.image_note_button = Button(self.nav_frame, text="Image Note", command=self.open_image_note_editor,
+                                        **button_style)  # New Button
+        self.image_note_button.pack(side=tk.LEFT, padx=3)
+
         self.gallery_button = Button(self.nav_frame, text="Gallery", command=self.toggle_gallery, **button_style)
         self.gallery_button.pack(side=tk.LEFT, padx=3)
         Button(self.nav_frame, text="Open in Explorer", command=self.open_in_explorer, **button_style).pack(
@@ -175,6 +180,7 @@ class ImageGallery:
         self.ocr_window = None
         self.ocr_text_widget = None
         self.notes_window = None
+        self.image_note_window = None
         self.gallery_window = None
         self.gallery_images = []
         self.gallery_index = 0
@@ -188,6 +194,7 @@ class ImageGallery:
         root.bind("<Right>", self.next_image)
         root.bind("<Control-e>", self.edit_image)
         self.notes_window = None
+        self.image_note_window = None
 
         self.search_entry.bind("<KeyRelease>", self.update_folder_list)
 
@@ -305,6 +312,7 @@ class ImageGallery:
             self.show_image()
             self.load_tags()
             self.load_notes()
+            self.load_image_note()
             self.folder_listbox.selection_set(selected_folder_index)
             # After load the images need to call method load_gallery_images
             self.load_gallery_images(full_folder_path)
@@ -329,6 +337,7 @@ class ImageGallery:
                 self.update_selected_image_label()
                 self.reset_selection()  # reset selection
                 self.perform_ocr() # trigger OCR after showing images
+                self.load_image_note()  # Load image note
             except Exception as e:
                 print(f"Error displaying image: {e}")
                 self.clear_image()
@@ -347,6 +356,7 @@ class ImageGallery:
             self.show_image()
             self.load_tags()
             self.load_notes()
+            self.load_image_note()
 
     def prev_image(self, event=None):
         if self.image_paths:
@@ -354,6 +364,7 @@ class ImageGallery:
             self.show_image()
             self.load_tags()
             self.load_notes()
+            self.load_image_note()
 
     def go_to_image(self):
         if not self.image_paths:
@@ -370,6 +381,7 @@ class ImageGallery:
                 self.show_image()
                 self.load_tags()
                 self.load_notes()
+                self.load_image_note()
 
     def edit_image(self, event=None):
         if self.image_paths:
@@ -623,6 +635,7 @@ class ImageGallery:
     def on_folder_select(self, event=None):
         self.load_tags()
         self.load_notes()
+        self.load_image_note()
 
     def open_ocr_popup(self, init_call=False):
         if self.ocr_window and tk.Toplevel.winfo_exists(self.ocr_window):
@@ -1001,6 +1014,7 @@ class ImageGallery:
             self.show_image()
             self.load_tags()
             self.load_notes()
+            self.load_image_note()
             self.toggle_gallery()
         except Exception as e:
             print(f"Error gallery image selection: {e}")
@@ -1014,6 +1028,7 @@ class ImageGallery:
             self.show_image()
             self.load_tags()
             self.load_notes()
+            self.load_image_note()
             self.toggle_gallery()
 
     def on_gallery_window_close(self):
@@ -1201,6 +1216,114 @@ class ImageGallery:
                 anchor=tk.NW,
                 image=self.current_image
             )
+
+    def open_image_note_editor(self):
+        if not self.image_paths:
+            return
+
+        if self.image_note_window and tk.Toplevel.winfo_exists(self.image_note_window):
+            self.image_note_window.focus()
+            return
+
+        self.image_note_window = Toplevel(self.root)
+        self.image_note_window.title("Edit Image Note")
+        self.image_note_window.geometry("400x300")
+        self.image_note_window.attributes('-topmost', True)
+
+        self.image_note_text = Text(self.image_note_window, bg='white', fg='black', font=("Arial", 12))
+        self.image_note_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.image_note_scrollbar = Scrollbar(self.image_note_window, orient=tk.VERTICAL)
+        self.image_note_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.image_note_text.config(yscrollcommand=self.image_note_scrollbar.set)
+        self.image_note_scrollbar.config(command=self.image_note_text.yview)
+
+        self.image_note_text.bind("<KeyRelease>", self.auto_save_image_note)
+
+        self.load_image_note_into_text()
+
+        self.image_note_window.protocol("WM_DELETE_WINDOW", self.on_image_note_window_close)
+        self.image_note_window.bind("<Left>", self.prev_image)
+        self.image_note_window.bind("<Right>", self.next_image)
+
+    def load_image_note_into_text(self):
+        if not self.image_note_window or not tk.Toplevel.winfo_exists(self.image_note_window):
+            return
+
+        self.image_note_text.delete("1.0", tk.END)
+        note_text = self.load_image_note()
+        self.image_note_text.insert("1.0", note_text)
+
+    def auto_save_image_note(self, event=None):
+        if not self.image_paths:
+            return
+
+        if self.image_note_window and tk.Toplevel.winfo_exists(self.image_note_window):
+            note_text = self.image_note_text.get("1.0", tk.END).strip()
+        else:
+            return
+
+        self.save_image_note(note_text)
+
+    def get_attachment_dir(self):
+        """Returns the attachment directory for the current image."""
+        if not self.image_paths:
+            return None
+
+        image_dir = os.path.dirname(self.image_paths[self.current_index])
+        attachment_dir = os.path.join(image_dir, self.ATTACHMENTS_DIR_NAME)
+
+        # Create the attachment directory if it doesn't exist
+        if not os.path.exists(attachment_dir):
+            try:
+                os.makedirs(attachment_dir)
+            except Exception as e:
+                print(f"Error creating attachment directory: {e}")
+                return None
+
+        return attachment_dir
+
+    def load_image_note(self):
+        attachment_dir = self.get_attachment_dir()
+        if not attachment_dir:
+            return ""
+
+        image_filename = os.path.basename(self.image_paths[self.current_index])
+        image_name_without_extension = os.path.splitext(image_filename)[0]
+        note_filename = f"{image_name_without_extension}.txt"
+        note_path = os.path.join(attachment_dir, note_filename)
+
+        try:
+            if os.path.exists(note_path):
+                with open(note_path, "r") as f:
+                    note_text = f.read()
+                return note_text
+            else:
+                return ""
+        except Exception as e:
+            print(f"Error loading image note: {e}")
+            return ""
+
+    def save_image_note(self, note_text):
+        attachment_dir = self.get_attachment_dir()
+        if not attachment_dir:
+            return
+
+        image_filename = os.path.basename(self.image_paths[self.current_index])
+        image_name_without_extension = os.path.splitext(image_filename)[0]
+        note_filename = f"{image_name_without_extension}.txt"
+        note_path = os.path.join(attachment_dir, note_filename)
+
+        try:
+            with open(note_path, "w") as f:
+                f.write(note_text)
+        except Exception as e:
+            print(f"Error saving image note: {e}")
+
+    def on_image_note_window_close(self):
+        self.image_note_window.destroy()
+        self.image_note_window = None
+
 
 if __name__ == "__main__":
     root = tk.Tk()
