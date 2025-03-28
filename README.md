@@ -5,6 +5,10 @@ App For Taking Screenshots As Notes
 
 # REQUIREMENTS
 
+```
+pip install Pillow pytesseract pyperclip tkinter
+```
+
 1- install tesseract <br>
 2-create folder called screenshots<br>
 3-create folder called Cyber Security or any name to save notes in<br>
