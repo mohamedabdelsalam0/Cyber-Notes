@@ -1,6 +1,7 @@
 # Cyber-Notes
 App For Taking Screenshots As Notes
-![image](https://github.com/user-attachments/assets/a1f0025b-74ca-48ae-a94a-c3178b48c2ca)
+![image](https://github.com/user-attachments/assets/9b28af32-b188-491d-9988-b4e31a19b5f0)
+
 
 # REQUIREMENTS
 
